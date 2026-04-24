@@ -19,7 +19,7 @@ body{
     border-radius:8px;
     box-shadow:0 4px 6px rgba(0,0,0,0.1);
     width:100%;
-    max-width:1000px;
+    max-width:1100px; /* Aumentado para caber as novas colunas */
 }
 
 textarea{
@@ -86,10 +86,10 @@ th{
 
 <p class="hint">
 Cole os dados no formato:<br>
-Inscrição, Nome, P1, P2, Nota Final / Inscrição, Nome, P1, P2, Nota Final
+Inscrição, Nome, P1, P2, P3, P4 / Inscrição, Nome, P1, P2, P3, P4
 </p>
 
-<textarea id="inputText"></textarea>
+<textarea id="inputText" placeholder="Ex: 10035011, ana, 2.6, 3.5, 5.8, 1.3"></textarea>
 
 <br>
 
@@ -123,16 +123,28 @@ function processar(){
 
             const partes = linha.split(",").map(p => p.trim());
 
+            // Captura as 4 notas
+            const n1 = parseFloat(partes[2]) || 0;
+            const n2 = parseFloat(partes[3]) || 0;
+            const n3 = parseFloat(partes[4]) || 0;
+            const n4 = parseFloat(partes[5]) || 0;
+            
+            // Soma as 4 notas para gerar a Nota Final
+            const somaFinal = n1 + n2 + n3 + n4;
+
             return {
                 inscricao: partes[0],
                 nome: partes[1],
-                p1: parseFloat(partes[2]),
-                p2: parseFloat(partes[3]),
-                final: parseFloat(partes[4])
+                p1: n1,
+                p2: n2,
+                p3: n3,
+                p4: n4,
+                final: somaFinal
             };
 
         });
 
+    // Ordena do maior para o menor
     candidatos.sort((a,b)=> b.final - a.final);
 
     candidatosOrdenados = candidatos;
@@ -147,11 +159,13 @@ function mostrarTabela(lista){
     <table id="tabelaCandidatos">
     <thead>
     <tr>
-        <th>Classificação</th>
+        <th>Pos.</th>
         <th>Inscrição</th>
         <th>Nome</th>
         <th>P1</th>
         <th>P2</th>
+        <th>P3</th>
+        <th>P4</th>
         <th>Nota Final</th>
     </tr>
     </thead>
@@ -162,11 +176,13 @@ function mostrarTabela(lista){
 
         html += `
         <tr>
-            <td>${i+1}</td>
+            <td>${i+1}º</td>
             <td>${c.inscricao}</td>
             <td>${c.nome}</td>
             <td>${c.p1.toFixed(2)}</td>
             <td>${c.p2.toFixed(2)}</td>
+            <td>${c.p3.toFixed(2)}</td>
+            <td>${c.p4.toFixed(2)}</td>
             <td><strong>${c.final.toFixed(2)}</strong></td>
         </tr>
         `;
@@ -194,12 +210,10 @@ function filtrarTabela(){
 
 function gerarCSV(){
 
-    let csv = "Classificacao,Inscricao,Nome,P1,P2,Nota Final\n";
+    let csv = "Classificacao,Inscricao,Nome,P1,P2,P3,P4,Nota Final\n";
 
     candidatosOrdenados.forEach((c,i)=>{
-
-        csv += `${i+1},${c.inscricao},${c.nome},${c.p1},${c.p2},${c.final}\n`;
-
+        csv += `${i+1},${c.inscricao},${c.nome},${c.p1},${c.p2},${c.p3},${c.p4},${c.final}\n`;
     });
 
     return csv;
@@ -214,9 +228,7 @@ function downloadCSV(){
     }
 
     const csv = gerarCSV();
-
     const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8;"});
-
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "classificacao_candidatos.csv";
@@ -239,12 +251,13 @@ function downloadXLS(){
         <th>Nome</th>
         <th>P1</th>
         <th>P2</th>
+        <th>P3</th>
+        <th>P4</th>
         <th>Nota Final</th>
     </tr>
     `;
 
     candidatosOrdenados.forEach((c,i)=>{
-
         tabela += `
         <tr>
             <td>${i+1}</td>
@@ -252,16 +265,16 @@ function downloadXLS(){
             <td>${c.nome}</td>
             <td>${c.p1}</td>
             <td>${c.p2}</td>
+            <td>${c.p3}</td>
+            <td>${c.p4}</td>
             <td>${c.final}</td>
         </tr>
         `;
-
     });
 
     tabela += "</table>";
 
     const blob = new Blob([tabela], {type:"application/vnd.ms-excel"});
-
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "classificacao_candidatos.xls";
@@ -273,4 +286,3 @@ function downloadXLS(){
 
 </body>
 </html>
-```
