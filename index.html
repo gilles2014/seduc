@@ -77,7 +77,7 @@ th{
 }
 
 .warning-hint {
-    color: #c0392b;
+    color: #d35400;
     font-weight: bold;
 }
 </style>
@@ -90,11 +90,11 @@ th{
 <h2>Classificação de Candidatos</h2>
 
 <p class="hint">
-Formato: Inscrição, Nome, P1, P2, P3, P4 <br>
-<span class="warning-hint">Critério: Soma de P3+P4 | Mínimo de 5.0 em P4 para classificar.</span>
+<strong>Formato esperado:</strong> Inscrição, Nome, P1, P2, P3, P4 <br>
+<span class="warning-hint">Regras: Nota Final = P3 + P4 | Eliminado se P4 < 5.0 | Desempate por P4.</span>
 </p>
 
-<textarea id="inputText" placeholder="10035011, ana, 2.6, 3.5, 5.8, 6.0"></textarea>
+<textarea id="inputText" placeholder="Exemplo: 10035011, Ana Souza, 2.6, 3.5, 5.8, 6.0"></textarea>
 
 <br>
 
@@ -121,12 +121,14 @@ function processar(){
         return;
     }
 
+    // Processamento dos dados
     const candidatos = rawText.split("/")
         .map(c => c.trim())
         .filter(c => c.length > 0)
         .map(linha => {
             const partes = linha.split(",").map(p => p.trim());
             
+            // Captura as notas P3 e P4 (índices 4 e 5 da linha)
             const n3 = parseFloat(partes[4]) || 0;
             const n4 = parseFloat(partes[5]) || 0;
             
@@ -137,25 +139,27 @@ function processar(){
                 p2: parseFloat(partes[3]) || 0,
                 p3: n3,
                 p4: n4,
-                final: n3 + n4 // Soma apenas P3 e P4
+                final: n3 + n4 // REGRA: Nota final apenas P3 + P4
             };
         })
-        // REGRA: Se P4 for menor que 5, remove da lista
+        // REGRA DE CORTE: Remove quem tirou menos de 5 em P4
         .filter(c => c.p4 >= 5);
 
-    // ORDENAÇÃO: 1º Nota Final, 2º P4 (Desempate)
+    // ORDENAÇÃO
     candidatos.sort((a, b) => {
+        // Primeiro critério: Nota Final (P3+P4)
         if (b.final !== a.final) {
             return b.final - a.final;
         }
-        return b.p4 - a.p4; // Critério de desempate
+        // Segundo critério (Desempate): Maior nota em P4
+        return b.p4 - a.p4;
     });
 
     candidatosOrdenados = candidatos;
     mostrarTabela(candidatosOrdenados);
 
     if(candidatosOrdenados.length === 0) {
-        alert("Nenhum candidato atingiu a nota mínima de 5.0 em P4.");
+        alert("Nenhum candidato da lista atende ao critério mínimo (P4 >= 5.0).");
     }
 }
 
@@ -170,8 +174,8 @@ function mostrarTabela(lista){
         <th>P1</th>
         <th>P2</th>
         <th>P3</th>
-        <th>P4 (Min: 5)</th>
-        <th>Soma (P3+P4)</th>
+        <th>P4</th>
+        <th>Nota Final (P3+P4)</th>
     </tr>
     </thead>
     <tbody>
@@ -219,13 +223,13 @@ function downloadCSV(){
     const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8;"});
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "classificacao_filtrada.csv";
+    link.download = "classificacao_p3_p4.csv";
     link.click();
 }
 
 function downloadXLS(){
     if(candidatosOrdenados.length === 0){ alert("Processe a lista primeiro."); return; }
-    let tabela = `<table><tr><th>Class.</th><th>Inscricao</th><th>Nome</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>Soma Final</th></tr>`;
+    let tabela = `<table><tr><th>Class.</th><th>Inscricao</th><th>Nome</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>Soma P3+P4</th></tr>`;
     candidatosOrdenados.forEach((c,i)=>{
         tabela += `<tr><td>${i+1}</td><td>${c.inscricao}</td><td>${c.nome}</td><td>${c.p1}</td><td>${c.p2}</td><td>${c.p3}</td><td>${c.p4}</td><td>${c.final}</td></tr>`;
     });
@@ -233,7 +237,7 @@ function downloadXLS(){
     const blob = new Blob([tabela], {type:"application/vnd.ms-excel"});
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "classificacao_filtrada.xls";
+    link.download = "classificacao_p3_p4.xls";
     link.click();
 }
 </script>
