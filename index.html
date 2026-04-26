@@ -90,7 +90,7 @@ th{
 <span class="warning-hint">
     Critérios Aplicados: <br>
     1. Apenas candidatos com P4 ≥ 5.0 aparecem. <br>
-    2. Classificação baseada na Nota Final (P3 + P4). <br>
+    2. Classificação baseada na maior Nota Final. <br>
     3. Empate decidido pela maior nota em P4.
 </span>
 
@@ -130,6 +130,11 @@ function processar(){
             
             const n3 = parseFloat(partes[4]) || 0;
             const n4 = parseFloat(partes[5]) || 0;
+            const n5 = 0; // Constante conforme regra
+            const n6 = 0; // Constante conforme regra
+            
+            // NF = (4*P3 + 2*P4 + 3*P5 + P6)/10
+            const notaFinal = ((4 * n3) + (2 * n4) + (3 * n5) + n6) / 10;
             
             return {
                 inscricao: partes[0],
@@ -138,19 +143,17 @@ function processar(){
                 p2: parseFloat(partes[3]) || 0,
                 p3: n3,
                 p4: n4,
-                final: n3 + n4 // Nota Final calculada aqui
+                final: notaFinal 
             };
         })
-        // 2. FILTRO DE CORTE: Se P4 for menor que 5, tchau!
+        // 2. FILTRO DE CORTE: Se P4 for menor que 5
         .filter(c => c.p4 >= 5);
 
-    // 3. ORDENAÇÃO: Prioridade total para a Nota Final
+    // 3. ORDENAÇÃO: Prioridade para a maior Nota Final
     candidatos.sort((a, b) => {
-        // Se a nota final for diferente, ordena pela maior final
-        if (b.final !== a.final) {
+        if (Math.abs(b.final - a.final) > 0.0001) {
             return b.final - a.final;
         }
-        // Se a nota final for igual, usa P4 como critério de desempate
         return b.p4 - a.p4;
     });
 
@@ -174,7 +177,7 @@ function mostrarTabela(lista){
         <th>P2</th>
         <th>P3</th>
         <th>P4</th>
-        <th>Nota Final (P3+P4)</th>
+        <th>Nota Final</th>
     </tr>
     </thead>
     <tbody>
@@ -208,11 +211,10 @@ function filtrarTabela(){
     mostrarTabela(filtrados);
 }
 
-// Funções de Download (CSV e XLS) mantidas com a nova lógica
 function gerarCSV(){
     let csv = "Classificacao,Inscricao,Nome,P1,P2,P3,P4,Nota Final\n";
     candidatosOrdenados.forEach((c,i)=>{
-        csv += `${i+1},${c.inscricao},${c.nome},${c.p1},${c.p2},${c.p3},${c.p4},${c.final}\n`;
+        csv += `${i+1},${c.inscricao},${c.nome},${c.p1},${c.p2},${c.p3},${c.p4},${c.final.toFixed(2)}\n`;
     });
     return csv;
 }
@@ -229,9 +231,9 @@ function downloadCSV(){
 
 function downloadXLS(){
     if(candidatosOrdenados.length === 0){ alert("Lista vazia!"); return; }
-    let tabela = `<table><tr><th>Posição</th><th>Inscricao</th><th>Nome</th><th>P3</th><th>P4</th><th>Final</th></tr>`;
+    let tabela = `<table border="1"><tr><th>Posição</th><th>Inscricao</th><th>Nome</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>Nota Final</th></tr>`;
     candidatosOrdenados.forEach((c,i)=>{
-        tabela += `<tr><td>${i+1}</td><td>${c.inscricao}</td><td>${c.nome}</td><td>${c.p3}</td><td>${c.p4}</td><td>${c.final}</td></tr>`;
+        tabela += `<tr><td>${i+1}</td><td>${c.inscricao}</td><td>${c.nome}</td><td>${c.p1}</td><td>${c.p2}</td><td>${c.p3}</td><td>${c.p4}</td><td>${c.final.toFixed(2)}</td></tr>`;
     });
     tabela += "</table>";
     const blob = new Blob([tabela], {type:"application/vnd.ms-excel"});
